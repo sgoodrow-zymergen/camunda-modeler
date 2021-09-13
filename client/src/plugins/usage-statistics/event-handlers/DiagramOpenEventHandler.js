@@ -24,7 +24,8 @@ const ELEMENT_TEMPLATES_CONFIG_KEY = 'bpmn.elementTemplates';
 const types = {
   BPMN: 'bpmn',
   DMN: 'dmn',
-  CMMN: 'cmmn'
+  CMMN: 'cmmn',
+  FORM: 'form'
 };
 
 // Sends a diagramOpened event to ET when an user opens any diagram
@@ -67,6 +68,18 @@ export default class DiagramOpenEventHandler extends BaseEventHandler {
 
     subscribe('cmmn.modeler.created', () => {
       this.onDiagramOpened(types.CMMN);
+    });
+
+    subscribe('form.modeler.created', async (context) => {
+      const {
+        tab
+      } = context;
+
+      const {
+        schema
+      } = tab;
+
+      return await this.onFormOpened(schema);
     });
   }
 
@@ -134,6 +147,19 @@ export default class DiagramOpenEventHandler extends BaseEventHandler {
       // Payload too large, send again with smaller payload
       this.sendToET(omit(payload, ['elementTemplates']));
     }
+  }
+
+  onFormOpened = async (schema, context = {}) => {
+
+    var engineProfile = { } ;
+
+    if (schema) {
+      engineProfile = { executionPlatform: schema.executionPlatform } ;
+    }
+
+    return await this.onDiagramOpened(types.FORM, {
+      engineProfile,
+      ...context });
   }
 
   onBpmnDiagramOpened = async (file, type, context = {}) => {
